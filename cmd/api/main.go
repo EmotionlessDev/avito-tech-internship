@@ -12,6 +12,8 @@ import (
 
 	"github.com/EmotionlessDev/avito-tech-internship/internal/application"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/config"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/handlers"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/repository"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/router"
 
 	_ "github.com/lib/pq"
@@ -41,9 +43,15 @@ func main() {
 			logger.Error("error closing db", slog.String("error", err.Error()))
 		}
 	}()
+	// Init error responder
+	errorResponder := handlers.NewErrorResponder(logger)
+
+	// Init repositories
+	teamRepo := repository.NewTeamRepo(db)
+	teamMemberRepo := repository.NewTeamMemberRepo(db)
 
 	// Init application via constructor
-	application := application.New(cfg, logger, db)
+	application := application.New(cfg, logger, db, teamRepo, teamMemberRepo, errorResponder)
 
 	// Create http server
 	srv := &http.Server{

@@ -9,7 +9,11 @@ func NewRouter(app *application.Application) *httprouter.Router {
 	router := httprouter.New()
 
 	// healthcheck
-	router.HandlerFunc("GET", "/api/health", app.Handlers.Health.Check)
+	router.HandlerFunc("GET", "/health", app.Handlers.Health.Check)
+
+	// team
+	router.HandlerFunc("POST", "/team/add", app.Handlers.Team.CreateTeam)
+	router.HandlerFunc("GET", "/team/get", app.Handlers.Team.GetTeam)
 
 	return router
 }
