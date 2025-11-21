@@ -3,21 +3,23 @@ package application
 import (
 	"database/sql"
 	"log/slog"
+
+	"github.com/EmotionlessDev/avito-tech-internship/internal/config"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/handlers"
 )
 
-type Config interface {
-}
-
 type Application struct {
-	Config Config
-	Logger *slog.Logger
-	DB     *sql.DB
+	Config   config.ConfigProvider
+	Logger   *slog.Logger
+	DB       *sql.DB
+	Handlers *handlers.Handlers
 }
 
-func New(cfg Config, logger *slog.Logger, db *sql.DB) *Application {
+func New(cfg config.ConfigProvider, logger *slog.Logger, db *sql.DB) *Application {
 	return &Application{
-		Config: cfg,
-		Logger: logger,
-		DB:     db,
+		Config:   cfg,
+		Logger:   logger,
+		DB:       db,
+		Handlers: handlers.NewHandlers(logger, cfg),
 	}
 }

@@ -11,24 +11,19 @@ import (
 	"time"
 
 	"github.com/EmotionlessDev/avito-tech-internship/internal/application"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/config"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/router"
 
 	_ "github.com/lib/pq"
 )
 
-type config struct {
-	port int
-	env  string
-	db   struct {
-		dsn string
-	}
-}
-
 func main() {
 	// Init config
-	var cfg config
-	flag.IntVar(&cfg.port, "port", 4000, "API server port")
-	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
-	flag.StringVar(&cfg.db.dsn, "dsn", os.Getenv("PR_POSTGRES_DSN"), "PostgreSQL DSN")
+	cfg := config.New(0, "", "")
+
+	flag.IntVar(&cfg.Port, "port", 4000, "API server port")
+	flag.StringVar(&cfg.Env, "env", "development", "Environment (development|staging|production)")
+	flag.StringVar(&cfg.DB.DSN, "dsn", os.Getenv("PR_POSTGRES_DSN"), "PostgreSQL DSN")
 	flag.Parse()
 
 	// Init logger
@@ -52,16 +47,16 @@ func main() {
 
 	// Create http server
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      application.Routes(),
+		Addr:         fmt.Sprintf(":%d", cfg.Port),
+		Handler:      router.NewRouter(application),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
 	logger.Info("starting server",
-		slog.Int("port", cfg.port),
-		slog.String("env", cfg.env),
+		slog.Int("port", cfg.Port),
+		slog.String("env", cfg.Env),
 	)
 
 	err = srv.ListenAndServe()
@@ -71,8 +66,8 @@ func main() {
 	}
 }
 
-func openDB(cfg config) (*sql.DB, error) {
-	db, err := sql.Open("postgres", cfg.db.dsn)
+func openDB(cfg config.ConfigProvider) (*sql.DB, error) {
+	db, err := sql.Open("postgres", cfg.GetDBDSN())
 	if err != nil {
 		return nil, err
 	}
