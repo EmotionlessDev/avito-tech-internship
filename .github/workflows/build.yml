@@ -1,0 +1,27 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Docker compose build
+        run: docker compose build 
+        env:
+          POSTGRES_PORT: 5432 
+          POSTGRES_USER: postgres 
+          POSTGRES_PASSWORD: postgres 
+          POSTGRES_DB: avitoInternship 
+          POSTGRES_HOST: localhost 
+          AVITOINTERNSHIP_POSTGRES_DSN: postgresql://postgres:postgres@localhost:5432/avitoInternship
+
