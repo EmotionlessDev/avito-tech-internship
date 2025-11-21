@@ -83,7 +83,9 @@ func (r *TeamRepo) GetByName(ctx context.Context, name string) (*models.Team, er
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		_ = rows.Close()
+	}()
 
 	for rows.Next() {
 		var m models.TeamMember
