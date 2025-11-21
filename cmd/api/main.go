@@ -40,7 +40,12 @@ func main() {
 		logger.Error("cannot connect to db", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer func() {
+		err = db.Close()
+		if err != nil {
+			logger.Error("error closing db", slog.String("error", err.Error()))
+		}
+	}()
 
 	// Init application via constructor
 	application := application.New(cfg, logger, db)
