@@ -35,7 +35,8 @@ func NewTeamHandler(
 
 func (h *TeamHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		TeamName string `json:"team_name"`
+		TeamName    string              `json:"team_name"`
+		TeamMembers []models.TeamMember `json:"members"`
 	}
 
 	err := helpers.ReadJSON(w, r, &input)
@@ -45,11 +46,17 @@ func (h *TeamHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	}
 
 	team := &models.Team{
-		TeamName: input.TeamName,
+		TeamName:    input.TeamName,
+		TeamMembers: input.TeamMembers,
 	}
 
 	err = h.TeamRepo.Create(r.Context(), team)
 	if err != nil {
+		if errors.Is(err, repository.ErrTeamDuplicate) {
+			h.ErrorResponder.Conflict(w, r, "team already exists")
+			return
+		}
+
 		h.ErrorResponder.InternalServerError(w, r, err)
 		return
 	}

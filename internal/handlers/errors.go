@@ -50,3 +50,7 @@ func (e *ErrorResponder) BadRequest(w http.ResponseWriter, r *http.Request, err 
 func (e *ErrorResponder) InternalServerError(w http.ResponseWriter, r *http.Request, err error) {
 	e.ServerError(w, r, err)
 }
+
+func (e *ErrorResponder) Conflict(w http.ResponseWriter, r *http.Request, message string) {
+	e.errorResponse(w, r, http.StatusConflict, message)
+}
