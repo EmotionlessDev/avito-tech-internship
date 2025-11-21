@@ -1,0 +1,20 @@
+include .env
+ENV_FILE = .env
+
+up:
+	docker compose --env-file $(ENV_FILE) up -d
+
+build:
+	docker compose build
+
+logs:
+	docker compose --env-file $(ENV_FILE) logs -f
+
+down:
+	docker compose --env-file $(ENV_FILE) down
+
+migrate-up:
+	migrate -path=./migrations -database "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:${POSTGRES_PORT}/${POSTGRES_DB}?sslmode=disable" up
+
+lint:
+	golangci-lint run
