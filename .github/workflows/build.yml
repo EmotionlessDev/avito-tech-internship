@@ -21,7 +21,7 @@ jobs:
           POSTGRES_PORT: 5432 
           POSTGRES_USER: postgres 
           POSTGRES_PASSWORD: postgres 
-          POSTGRES_DB: avitoInternship 
+          POSTGRES_DB: pr 
           POSTGRES_HOST: localhost 
-          AVITOINTERNSHIP_POSTGRES_DSN: postgresql://postgres:postgres@localhost:5432/avitoInternship
+          PQ_POSTGRES_DSN: postgresql://postgres:postgres@localhost:5432/pr
 
