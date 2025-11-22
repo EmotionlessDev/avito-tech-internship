@@ -15,6 +15,7 @@ import (
 	"github.com/EmotionlessDev/avito-tech-internship/internal/handlers"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/repository"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/router"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/services"
 
 	_ "github.com/lib/pq"
 )
@@ -48,9 +49,13 @@ func main() {
 
 	// Init repositories
 	teamRepo := repository.NewTeamRepo(db)
+	userRepo := repository.NewUserRepo(db)
+
+	// Init services
+	teamService := services.NewTeamService(teamRepo, userRepo)
 
 	// Init application via constructor
-	application := application.New(cfg, logger, db, teamRepo, errorResponder)
+	application := application.New(cfg, logger, db, errorResponder, teamService)
 
 	// Create http server
 	srv := &http.Server{

@@ -8,25 +8,26 @@ import (
 	"github.com/EmotionlessDev/avito-tech-internship/internal/helpers"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/models"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/repository"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/services"
 )
 
 var errMissingTeamName = errors.New("missing team_name parameter")
 
 type TeamHandler struct {
-	TeamRepo       repository.TeamRepository
+	teamService    services.TeamService
 	ErrorResponder *ErrorResponder
 	Logger         *slog.Logger
 }
 
 func NewTeamHandler(
-	teamRepo repository.TeamRepository,
 	ErrorResponder *ErrorResponder,
 	logger *slog.Logger,
+	teamService services.TeamService,
 ) *TeamHandler {
 	return &TeamHandler{
-		TeamRepo:       teamRepo,
 		ErrorResponder: ErrorResponder,
 		Logger:         logger,
+		teamService:    teamService,
 	}
 }
 
@@ -42,12 +43,12 @@ func (h *TeamHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	team := &models.Team{
+	team := models.Team{
 		TeamName: input.TeamName,
 		Members:  input.TeamMembers,
 	}
 
-	err = h.TeamRepo.Create(r.Context(), team)
+	err = h.teamService.CreateTeamWithMembers(r.Context(), team)
 	if err != nil {
 		if errors.Is(err, repository.ErrTeamDuplicate) {
 			h.ErrorResponder.Conflict(w, r, "team already exists")
@@ -73,7 +74,7 @@ func (h *TeamHandler) GetTeam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	team, err := h.TeamRepo.GetByName(r.Context(), teamName)
+	team, err := h.teamService.GetTeam(r.Context(), teamName)
 	if err != nil {
 		if errors.Is(err, repository.ErrTeamNotFound) {
 			h.ErrorResponder.NotFound(w, r)

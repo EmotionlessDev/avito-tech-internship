@@ -6,7 +6,7 @@ import (
 
 	"github.com/EmotionlessDev/avito-tech-internship/internal/config"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/handlers"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/repository"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/services"
 )
 
 type Application struct {
@@ -20,13 +20,13 @@ func New(
 	cfg config.ConfigProvider,
 	logger *slog.Logger,
 	db *sql.DB,
-	teamRepo repository.TeamRepository,
 	errorResponder *handlers.ErrorResponder,
+	teamService services.TeamService,
 ) *Application {
 	return &Application{
 		Config:   cfg,
 		Logger:   logger,
 		DB:       db,
-		Handlers: handlers.NewHandlers(logger, cfg, teamRepo, errorResponder),
+		Handlers: handlers.NewHandlers(logger, cfg, errorResponder, teamService),
 	}
 }
