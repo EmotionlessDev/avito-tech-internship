@@ -2,13 +2,6 @@ CREATE TABLE IF NOT EXISTS teams (
     team_name VARCHAR(255) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS team_members (
-    user_id VARCHAR(255) PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    team_name VARCHAR(255) REFERENCES teams(team_name) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS users (
     user_id VARCHAR(255) PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
