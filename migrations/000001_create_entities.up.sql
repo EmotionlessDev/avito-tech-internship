@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS teams (
 CREATE TABLE IF NOT EXISTS users (
     user_id VARCHAR(255) PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
-    team_name VARCHAR(255) REFERENCES teams(team_name) ON DELETE SET NULL,
+    team_name VARCHAR(255) REFERENCES teams(team_name),
     is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 

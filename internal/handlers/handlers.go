@@ -16,11 +16,10 @@ func NewHandlers(
 	logger *slog.Logger,
 	cfg config.ConfigProvider,
 	teamRepo repository.TeamRepository,
-	teamMemberRepo repository.TeamMemberRepository,
 	errorResponder *ErrorResponder,
 ) *Handlers {
 	return &Handlers{
 		Health: NewHealthCheckHandler(logger, cfg),
-		Team:   NewTeamHandler(teamRepo, teamMemberRepo, errorResponder, logger),
+		Team:   NewTeamHandler(teamRepo, errorResponder, logger),
 	}
 }

@@ -21,13 +21,12 @@ func New(
 	logger *slog.Logger,
 	db *sql.DB,
 	teamRepo repository.TeamRepository,
-	teamMemberRepo repository.TeamMemberRepository,
 	errorResponder *handlers.ErrorResponder,
 ) *Application {
 	return &Application{
 		Config:   cfg,
 		Logger:   logger,
 		DB:       db,
-		Handlers: handlers.NewHandlers(logger, cfg, teamRepo, teamMemberRepo, errorResponder),
+		Handlers: handlers.NewHandlers(logger, cfg, teamRepo, errorResponder),
 	}
 }

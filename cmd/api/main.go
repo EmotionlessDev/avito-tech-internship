@@ -48,10 +48,9 @@ func main() {
 
 	// Init repositories
 	teamRepo := repository.NewTeamRepo(db)
-	teamMemberRepo := repository.NewTeamMemberRepo(db)
 
 	// Init application via constructor
-	application := application.New(cfg, logger, db, teamRepo, teamMemberRepo, errorResponder)
+	application := application.New(cfg, logger, db, teamRepo, errorResponder)
 
 	// Create http server
 	srv := &http.Server{

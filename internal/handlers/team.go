@@ -14,20 +14,17 @@ var errMissingTeamName = errors.New("missing team_name parameter")
 
 type TeamHandler struct {
 	TeamRepo       repository.TeamRepository
-	TeamMemberRepo repository.TeamMemberRepository
 	ErrorResponder *ErrorResponder
 	Logger         *slog.Logger
 }
 
 func NewTeamHandler(
 	teamRepo repository.TeamRepository,
-	teamMemberRepo repository.TeamMemberRepository,
 	ErrorResponder *ErrorResponder,
 	logger *slog.Logger,
 ) *TeamHandler {
 	return &TeamHandler{
 		TeamRepo:       teamRepo,
-		TeamMemberRepo: teamMemberRepo,
 		ErrorResponder: ErrorResponder,
 		Logger:         logger,
 	}
@@ -35,8 +32,8 @@ func NewTeamHandler(
 
 func (h *TeamHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		TeamName    string              `json:"team_name"`
-		TeamMembers []models.TeamMember `json:"members"`
+		TeamName    string        `json:"team_name"`
+		TeamMembers []models.User `json:"members"`
 	}
 
 	err := helpers.ReadJSON(w, r, &input)
@@ -46,8 +43,8 @@ func (h *TeamHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	}
 
 	team := &models.Team{
-		TeamName:    input.TeamName,
-		TeamMembers: input.TeamMembers,
+		TeamName: input.TeamName,
+		Members:  input.TeamMembers,
 	}
 
 	err = h.TeamRepo.Create(r.Context(), team)
