@@ -15,5 +15,8 @@ func NewRouter(app *application.Application) *httprouter.Router {
 	router.HandlerFunc("POST", "/team/add", app.Handlers.Team.CreateTeam)
 	router.HandlerFunc("GET", "/team/get", app.Handlers.Team.GetTeam)
 
+	// user
+	router.HandlerFunc("POST", "/users/setIsActive", app.Handlers.User.SetIsActive)
+
 	return router
 }

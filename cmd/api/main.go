@@ -53,9 +53,10 @@ func main() {
 
 	// Init services
 	teamService := services.NewTeamService(teamRepo, userRepo)
+	userService := services.NewUserService(userRepo)
 
 	// Init application via constructor
-	application := application.New(cfg, logger, db, errorResponder, teamService)
+	application := application.New(cfg, logger, db, errorResponder, teamService, userService)
 
 	// Create http server
 	srv := &http.Server{

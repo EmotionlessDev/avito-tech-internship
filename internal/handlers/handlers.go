@@ -10,6 +10,7 @@ import (
 type Handlers struct {
 	Health *HealthCheckHandler
 	Team   *TeamHandler
+	User   *UserHandler
 }
 
 func NewHandlers(
@@ -17,9 +18,11 @@ func NewHandlers(
 	cfg config.ConfigProvider,
 	errorResponder *ErrorResponder,
 	teamService services.TeamService,
+	userService services.UserService,
 ) *Handlers {
 	return &Handlers{
 		Health: NewHealthCheckHandler(logger, cfg),
 		Team:   NewTeamHandler(errorResponder, logger, teamService),
+		User:   NewUserHandler(userService, errorResponder, logger),
 	}
 }

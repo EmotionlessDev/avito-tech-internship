@@ -22,11 +22,12 @@ func New(
 	db *sql.DB,
 	errorResponder *handlers.ErrorResponder,
 	teamService services.TeamService,
+	userService services.UserService,
 ) *Application {
 	return &Application{
 		Config:   cfg,
 		Logger:   logger,
 		DB:       db,
-		Handlers: handlers.NewHandlers(logger, cfg, errorResponder, teamService),
+		Handlers: handlers.NewHandlers(logger, cfg, errorResponder, teamService, userService),
 	}
 }
