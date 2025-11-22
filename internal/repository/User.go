@@ -15,6 +15,7 @@ type UserRepository interface {
 	UpdateIsActive(ctx context.Context, userID string, isActive bool) (*models.User, error)
 	GetByID(ctx context.Context, userID string) (*models.User, error)
 	CreateOrUpdate(ctx context.Context, user *models.User) error
+	GetActiveUsersByTeam(ctx context.Context, team string, excludeUserID string) ([]*models.User, error)
 }
 
 type UserRepo struct {
@@ -90,4 +91,27 @@ func (r *UserRepo) CreateOrUpdate(ctx context.Context, user *models.User) error 
 	}
 
 	return nil
+}
+
+func (r *UserRepo) GetActiveUsersByTeam(ctx context.Context, team string, excludeUserID string) ([]*models.User, error) {
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT user_id, username, team_name, is_active
+		FROM users
+		WHERE team_name = $1 AND is_active = TRUE AND user_id != $2
+	`, team, excludeUserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var users []*models.User
+	for rows.Next() {
+		var u models.User
+		if err := rows.Scan(&u.UserID, &u.Username, &u.TeamName, &u.IsActive); err != nil {
+			return nil, err
+		}
+		users = append(users, &u)
+	}
+
+	return users, nil
 }
