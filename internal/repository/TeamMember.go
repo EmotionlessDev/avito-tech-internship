@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 
 	"github.com/EmotionlessDev/avito-tech-internship/internal/models"
 )
@@ -12,8 +11,8 @@ import (
 var ErrTeamMemberNotFound error = errors.New("team member not found")
 
 type TeamMemberRepository interface {
-	Create(ctx context.Context, member *models.TeamMember) error
-	ListByTeam(ctx context.Context, teamName string) ([]models.TeamMember, error)
+	AddMembers(ctx context.Context, teamName string, members []models.User) error
+	ListByTeam(ctx context.Context, teamName string) ([]models.User, error)
 }
 
 type TeamMemberRepo struct {
@@ -24,40 +23,52 @@ func NewTeamMemberRepo(db *sql.DB) *TeamMemberRepo {
 	return &TeamMemberRepo{db: db}
 }
 
-func (r *TeamMemberRepo) Create(ctx context.Context, m *models.TeamMember) error {
-	_, err := r.db.ExecContext(ctx,
-		`INSERT INTO users (user_id, username, is_active, team_name)
-         VALUES ($1, $2, $3, $4)`,
-		m.UserID, m.Username, m.IsActive, m.TeamName,
-	)
-	return err
-}
-
-func (r *TeamMemberRepo) ListByTeam(ctx context.Context, teamName string) ([]models.TeamMember, error) {
-	rows, err := r.db.QueryContext(ctx,
-		`SELECT user_id, username, is_active, team_name FROM users WHERE team_name = $1`,
-		teamName,
-	)
+func (r *TeamMemberRepo) AddMembers(ctx context.Context, teamName string, members []models.User) error {
+	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query team members: %w", err)
+		return err
 	}
 	defer func() {
-		_ = rows.Close() // ignore error on close
+		if err != nil {
+			_ = tx.Rollback()
+		} else {
+			_ = tx.Commit()
+		}
 	}()
 
-	var members []models.TeamMember
-	for rows.Next() {
-		var m models.TeamMember
-		err = rows.Scan(&m.UserID, &m.Username, &m.IsActive, &m.TeamName)
+	for _, m := range members {
+		_, err = tx.ExecContext(ctx, `
+            INSERT INTO team_members (team_name, user_id)
+            VALUES ($1, $2)
+            ON CONFLICT (team_name, user_id) DO NOTHING
+        `, teamName, m.UserID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan team member: %w", err)
+			return err
 		}
-		members = append(members, m)
+	}
+	return nil
+}
+
+func (r *TeamMemberRepo) ListByTeam(ctx context.Context, teamName string) ([]models.User, error) {
+	rows, err := r.db.QueryContext(ctx, `
+        SELECT u.user_id, u.username, u.is_active
+        FROM team_members tm
+        JOIN users u ON tm.user_id = u.user_id
+        WHERE tm.team_name = $1
+    `, teamName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []models.User{}
+	for rows.Next() {
+		var u models.User
+		if err := rows.Scan(&u.UserID, &u.Username, &u.IsActive); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
 	}
 
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("row iteration error: %w", err)
-	}
-
-	return members, nil
+	return users, nil
 }

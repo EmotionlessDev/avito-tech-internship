@@ -4,7 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/EmotionlessDev/avito-tech-internship/internal/config"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/repository"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/services"
 )
 
 type Handlers struct {
@@ -15,12 +15,11 @@ type Handlers struct {
 func NewHandlers(
 	logger *slog.Logger,
 	cfg config.ConfigProvider,
-	teamRepo repository.TeamRepository,
-	teamMemberRepo repository.TeamMemberRepository,
 	errorResponder *ErrorResponder,
+	teamService *services.TeamService,
 ) *Handlers {
 	return &Handlers{
 		Health: NewHealthCheckHandler(logger, cfg),
-		Team:   NewTeamHandler(teamRepo, teamMemberRepo, errorResponder, logger),
+		Team:   NewTeamHandler(errorResponder, logger, teamService),
 	}
 }

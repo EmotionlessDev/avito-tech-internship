@@ -8,35 +8,33 @@ import (
 	"github.com/EmotionlessDev/avito-tech-internship/internal/helpers"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/models"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/repository"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/services"
 )
 
 var errMissingTeamName = errors.New("missing team_name parameter")
 
 type TeamHandler struct {
-	TeamRepo       repository.TeamRepository
-	TeamMemberRepo repository.TeamMemberRepository
 	ErrorResponder *ErrorResponder
 	Logger         *slog.Logger
+	TeamService    *services.TeamService
 }
 
 func NewTeamHandler(
-	teamRepo repository.TeamRepository,
-	teamMemberRepo repository.TeamMemberRepository,
 	ErrorResponder *ErrorResponder,
 	logger *slog.Logger,
+	teamService *services.TeamService,
 ) *TeamHandler {
 	return &TeamHandler{
-		TeamRepo:       teamRepo,
-		TeamMemberRepo: teamMemberRepo,
 		ErrorResponder: ErrorResponder,
 		Logger:         logger,
+		TeamService:    teamService,
 	}
 }
 
 func (h *TeamHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		TeamName    string              `json:"team_name"`
-		TeamMembers []models.TeamMember `json:"members"`
+		TeamName    string        `json:"team_name"`
+		TeamMembers []models.User `json:"members"`
 	}
 
 	err := helpers.ReadJSON(w, r, &input)
@@ -45,12 +43,12 @@ func (h *TeamHandler) CreateTeam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	team := &models.Team{
-		TeamName:    input.TeamName,
-		TeamMembers: input.TeamMembers,
+	team := models.Team{
+		TeamName: input.TeamName,
+		Members:  input.TeamMembers,
 	}
 
-	err = h.TeamRepo.Create(r.Context(), team)
+	err = h.TeamService.CreateTeamWithMembers(r.Context(), team)
 	if err != nil {
 		if errors.Is(err, repository.ErrTeamDuplicate) {
 			h.ErrorResponder.Conflict(w, r, "team already exists")
@@ -76,7 +74,7 @@ func (h *TeamHandler) GetTeam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	team, err := h.TeamRepo.GetByName(r.Context(), teamName)
+	team, err := h.TeamService.GetTeam(r.Context(), teamName)
 	if err != nil {
 		if errors.Is(err, repository.ErrTeamNotFound) {
 			h.ErrorResponder.NotFound(w, r)

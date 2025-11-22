@@ -2,18 +2,16 @@ CREATE TABLE IF NOT EXISTS teams (
     team_name VARCHAR(255) PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS team_members (
-    user_id VARCHAR(255) PRIMARY KEY,
-    username VARCHAR(255) NOT NULL,
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    team_name VARCHAR(255) REFERENCES teams(team_name) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS users (
     user_id VARCHAR(255) PRIMARY KEY,
     username VARCHAR(255) NOT NULL,
-    team_name VARCHAR(255) REFERENCES teams(team_name) ON DELETE SET NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE TABLE IF NOT EXISTS team_members (
+    user_id VARCHAR(255) REFERENCES users(user_id) ON DELETE CASCADE,
+    team_name VARCHAR(255) REFERENCES teams(team_name) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, team_name)
 );
 
 CREATE TABLE IF NOT EXISTS pull_requests (
