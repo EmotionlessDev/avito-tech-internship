@@ -30,6 +30,10 @@ cp .env.example .env
 
 ## ▶️ Как запустить проект
 
+```bash
+docker compose up -- build
+```
+
 ### 1. Собрать контейнеры
 
 ```bash
