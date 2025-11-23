@@ -10,9 +10,19 @@ import (
 	"os"
 	"time"
 
-	"github.com/EmotionlessDev/avito-tech-internship/internal/application"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/config"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/router"
+	prHttp "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/delivery/http"
+	prCreate "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/service/create"
+	prStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/storage/pullrequest"
+	prUserStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/storage/user"
+	teamHttp "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/delivery/http"
+	teamAdd "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/add"
+	teamGet "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/get"
+	teamStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/team"
+	teamUserStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/user"
+	userHttp "github.com/EmotionlessDev/avito-tech-internship/internal/domain/users/delivery/http"
+	userUpdate "github.com/EmotionlessDev/avito-tech-internship/internal/domain/users/service/update"
+	userStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/users/storage/user"
 
 	_ "github.com/lib/pq"
 )
@@ -42,13 +52,47 @@ func main() {
 		}
 	}()
 
-	// Init application via constructor
-	application := application.New(cfg, logger, db)
+	// Init storage
+	teamStorage := teamStorage.NewStorage()
+	teamUserStorage := teamUserStorage.NewStorage()
+
+	userStorage := userStorage.NewStorage()
+
+	prStorage := prStorage.NewStorage()
+	prUserStorage := prUserStorage.NewStorage()
+
+	// Init services
+	teamAddService := teamAdd.NewService(teamStorage, teamUserStorage, db)
+	teamGetService := teamGet.NewService(teamStorage, teamUserStorage, db)
+
+	userUpdateService := userUpdate.NewService(userStorage, db)
+
+	prCreateService := prCreate.NewService(db, prStorage, prUserStorage)
+
+	// Init Handlers
+	teamHandler := teamHttp.NewHandler(teamAddService, teamGetService)
+	userHandler := userHttp.NewHandler(userUpdateService)
+	prHandler := prHttp.NewHandler(prCreateService)
+
+	// Init serveMux
+	mux := http.NewServeMux()
+
+	// Map Routes
+
+	// Team routes
+	mux.HandleFunc("/team/add", teamHandler.AddTeam)
+	mux.HandleFunc("/team/get", teamHandler.GetTeam)
+
+	// User routes
+	mux.HandleFunc("/users/setIsActive", userHandler.SetUserActive)
+
+	// PR routes
+	mux.HandleFunc("/pullrequest/create", prHandler.CreatePR)
 
 	// Create http server
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),
-		Handler:      router.NewRouter(application),
+		Handler:      mux,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
