@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/EmotionlessDev/avito-tech-internship/internal/common"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team"
 )
 
@@ -52,21 +51,15 @@ func (s *Service) Get(ctx context.Context, teamName string) (*TeamWithMembers, e
 		tx.Commit()
 	}()
 
-	t, err := s.teamStorage.GetByName(ctx, tx, teamName)
-	if err != nil {
-		if err == common.ErrTeamNotFound {
-			return nil, err
-		}
-		return nil, fmt.Errorf("failed to get team: %w", err)
-	}
-
 	members, err := s.userStorage.GetByTeam(ctx, tx, teamName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get team members: %w", err)
 	}
 
 	return &TeamWithMembers{
-		Team:    t,
+		Team: &team.Team{
+			Name: teamName,
+		},
 		Members: members,
 	}, nil
 }

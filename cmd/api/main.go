@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/EmotionlessDev/avito-tech-internship/internal/config"
-	ht "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/delivery/http"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/add"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/get"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/team"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/user"
+	teamHttp "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/delivery/http"
+	teamAdd "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/add"
+	teamGet "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/get"
+	teamStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/team"
+	teamUserStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/user"
 
 	_ "github.com/lib/pq"
 )
@@ -44,25 +44,24 @@ func main() {
 			logger.Error("error closing db", slog.String("error", err.Error()))
 		}
 	}()
+
 	// Init storage
-	teamStorage := team.NewStorage()
-	userStorage := user.NewStorage()
+	teamStorage := teamStorage.NewStorage()
+	userStorage := teamUserStorage.NewStorage()
 
 	// Init services
-	teamAddService := add.NewService(teamStorage, userStorage, db)
-	teamGetService := get.NewService(teamStorage, userStorage, db)
+	teamAddService := teamAdd.NewService(teamStorage, userStorage, db)
+	teamGetService := teamGet.NewService(teamStorage, userStorage, db)
+
+	// Init Handlers
+	handler := teamHttp.NewHandler(teamAddService, teamGetService)
 
 	// Init serveMux
 	mux := http.NewServeMux()
 
-	// Init Handlers
-	handler := &ht.Handler{
-		AddService: teamAddService,
-		GetService: teamGetService,
-	}
-
 	// Map Routes
-	ht.MapTeamRoutes(mux, handler)
+	mux.HandleFunc("/teams/add", handler.AddTeam)
+	mux.HandleFunc("/teams/get", handler.GetTeam)
 
 	// Create http server
 	srv := &http.Server{

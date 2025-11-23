@@ -8,14 +8,28 @@ import (
 
 	"github.com/EmotionlessDev/avito-tech-internship/internal/common"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/add"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/get"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/helpers"
 )
 
+type AddService interface {
+	Add(ctx context.Context, t *team.Team, members []team.User) error
+}
+
+type GetService interface {
+	Get(ctx context.Context, teamName string) (*get.TeamWithMembers, error)
+}
+
 type Handler struct {
-	AddService *add.Service
-	GetService *get.Service
+	addService AddService
+	getService GetService
+}
+
+func NewHandler(addService AddService, getService GetService) *Handler {
+	return &Handler{
+		addService: addService,
+		getService: getService,
+	}
 }
 
 func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
@@ -48,7 +62,7 @@ func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	err := h.AddService.Add(ctx, teamEntity, members)
+	err := h.addService.Add(ctx, teamEntity, members)
 	if err != nil {
 
 		if errors.Is(err, common.ErrTeamDuplicate) {
@@ -90,7 +104,7 @@ func (h *Handler) GetTeam(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	res, err := h.GetService.Get(ctx, teamName)
+	res, err := h.getService.Get(ctx, teamName)
 	if err != nil {
 		if errors.Is(err, common.ErrTeamNotFound) {
 			helpers.WriteJSON(w, http.StatusNotFound, helpers.Envelope{
