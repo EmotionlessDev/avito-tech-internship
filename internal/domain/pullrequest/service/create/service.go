@@ -37,7 +37,7 @@ func NewService(db *sql.DB, prStorage PullRequestStorage, userStorage UserStorag
 }
 
 func (s *Service) CreatePR(ctx context.Context, pr pullrequest.PullRequest) (*pullrequest.PullRequestWithReviewers, error) {
-	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable})
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{Isolation: sql.LevelRepeatableRead})
 	if err != nil {
 		return nil, fmt.Errorf("failed to begin tx: %w", err)
 	}

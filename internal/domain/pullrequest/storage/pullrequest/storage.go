@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/EmotionlessDev/avito-tech-internship/internal/common"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest"
 )
 
@@ -63,8 +64,28 @@ func (s *Storage) GetByID(ctx context.Context, tx *sql.Tx, id string) (*pullrequ
 	return pgPullRequestToDomain(pr), nil
 }
 
-func pgPullRequestToDomain(pr pgPullRequest) *pullrequest.PullRequest {
+const mergeSQL = `
+	UPDATE pull_request
+	SET status = 'MERGED' merged_at = NOW()
+	WHERE id = $1 AND status = 'OPEN'
+	RETURNING id, name, created_at, status, merged_at, author_id
+`
 
+func (s *Storage) Merge(ctx context.Context, tx *sql.Tx, id string) (*pullrequest.PullRequest, error) {
+	if tx == nil {
+		return nil, errNilTx
+	}
+
+	var pr pgPullRequest
+	err := tx.QueryRowContext(ctx, mergeSQL, id).Scan(&pr.id, &pr.name, &pr.createdAt, &pr.status, &pr.mergedAt, &pr.authorID)
+	if err == sql.ErrNoRows {
+		return nil, common.ErrPRNotFound
+	}
+
+	return pgPullRequestToDomain(pr), nil
+}
+
+func pgPullRequestToDomain(pr pgPullRequest) *pullrequest.PullRequest {
 	return &pullrequest.PullRequest{
 		ID:        pr.id,
 		Name:      pr.name,
