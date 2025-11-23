@@ -18,21 +18,26 @@ type PullRequestStorage interface {
 }
 
 type UserStorage interface {
-	GetTeamMembers(ctx context.Context, tx *sql.Tx, teamName string, excludeID string) ([]team.User, error)
 	GetByID(ctx context.Context, tx *sql.Tx, id string) (*team.User, error)
+}
+
+type TeamStorage interface {
+	GetMembers(ctx context.Context, tx *sql.Tx, teamName string, excludeIDs []string) ([]team.User, error)
 }
 
 type Service struct {
 	db          *sql.DB
 	prStorage   PullRequestStorage
 	userStorage UserStorage
+	teamStorage TeamStorage
 }
 
-func NewService(db *sql.DB, prStorage PullRequestStorage, userStorage UserStorage) *Service {
+func NewService(db *sql.DB, prStorage PullRequestStorage, userStorage UserStorage, teamStorage TeamStorage) *Service {
 	return &Service{
 		db:          db,
 		prStorage:   prStorage,
 		userStorage: userStorage,
+		teamStorage: teamStorage,
 	}
 }
 
@@ -61,7 +66,7 @@ func (s *Service) CreatePR(ctx context.Context, pr pullrequest.PullRequest) (*pu
 		return nil, fmt.Errorf("failed to get user by id: %w", err)
 	}
 
-	members, err := s.userStorage.GetTeamMembers(ctx, tx, user.TeamName, pr.AuthorID)
+	members, err := s.teamStorage.GetMembers(ctx, tx, user.TeamName, []string{pr.AuthorID})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get team members: %w", err)
 	}
@@ -72,6 +77,7 @@ func (s *Service) CreatePR(ctx context.Context, pr pullrequest.PullRequest) (*pu
 		if len(members) < 2 {
 			n = len(members)
 		}
+
 		rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 		perm := rng.Perm(len(members))
 		for i := 0; i < n; i++ {

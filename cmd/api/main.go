@@ -14,6 +14,7 @@ import (
 	prHttp "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/delivery/http"
 	prCreate "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/service/create"
 	prStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/storage/pullrequest"
+	prTeamStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/storage/team"
 	prUserStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/storage/user"
 	teamHttp "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/delivery/http"
 	teamAdd "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/add"
@@ -60,6 +61,7 @@ func main() {
 
 	prStorage := prStorage.NewStorage()
 	prUserStorage := prUserStorage.NewStorage()
+	prTeamStorage := prTeamStorage.NewStorage()
 
 	// Init services
 	teamAddService := teamAdd.NewService(teamStorage, teamUserStorage, db)
@@ -67,7 +69,7 @@ func main() {
 
 	userUpdateService := userUpdate.NewService(userStorage, db)
 
-	prCreateService := prCreate.NewService(db, prStorage, prUserStorage)
+	prCreateService := prCreate.NewService(db, prStorage, prUserStorage, prTeamStorage)
 
 	// Init Handlers
 	teamHandler := teamHttp.NewHandler(teamAddService, teamGetService)

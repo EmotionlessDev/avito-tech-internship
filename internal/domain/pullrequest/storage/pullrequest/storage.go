@@ -3,6 +3,7 @@ package pullrequest
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -45,6 +46,8 @@ func (s *Storage) Create(ctx context.Context, tx *sql.Tx, pr pullrequest.PullReq
 	return nil
 }
 
+const getByIDSql = `SELECT id, name, created_at, status, merged_at, author_id FROM pull_request WHERE id = $1`
+
 func (s *Storage) GetByID(ctx context.Context, tx *sql.Tx, id string) (*pullrequest.PullRequest, error) {
 	if tx == nil {
 		return nil, errNilTx
@@ -52,7 +55,7 @@ func (s *Storage) GetByID(ctx context.Context, tx *sql.Tx, id string) (*pullrequ
 
 	var pr pgPullRequest
 	err := tx.QueryRowContext(ctx,
-		"SELECT id, name, created_at, status, merged_at, author_id FROM pull_request WHERE id = $1", id,
+		getByIDSql, id,
 	).Scan(&pr.id, &pr.name, &pr.createdAt, &pr.status, &pr.mergedAt, &pr.authorID)
 	if err == sql.ErrNoRows {
 		return nil, nil
@@ -62,6 +65,27 @@ func (s *Storage) GetByID(ctx context.Context, tx *sql.Tx, id string) (*pullrequ
 	}
 
 	return pgPullRequestToDomain(pr), nil
+}
+
+const getReviewersByIDSql = `SELECT reviewer_id FROM pr_reviwer WHERE request_id = $1`
+
+func (s *Storage) GetReviewersByID(ctx context.Context, tx *sql.Tx, id string) ([]string, error) {
+	if tx == nil {
+		return nil, errNilTx
+	}
+
+	var reviewers []string
+	err := tx.QueryRowContext(ctx,
+		getReviewersByIDSql, id,
+	).Scan(&reviewers)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get PR reviwers by id: %w", err)
+	}
+
+	return reviewers, nil
 }
 
 const mergeSQL = `
@@ -83,6 +107,37 @@ func (s *Storage) Merge(ctx context.Context, tx *sql.Tx, id string) (*pullreques
 	}
 
 	return pgPullRequestToDomain(pr), nil
+}
+
+const reaassignSQL = `
+	UPDATE pr_reviwer
+	SET
+		reviewer_id = $3
+	WHERE
+		reviewer_id = $2
+		AND request_id = $1;
+`
+
+func (s *Storage) Reassign(ctx context.Context, tx *sql.Tx, id string, old, new string) error {
+	if tx == nil {
+		return errNilTx
+	}
+
+	row, err := tx.ExecContext(ctx, reaassignSQL, id, old, new)
+	if err != nil {
+		return err
+	}
+
+	n, err := row.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to reassign reviewer: %w", err)
+	}
+
+	if n == 0 {
+		return errors.New("failed to reassign reviewer")
+	}
+
+	return nil
 }
 
 func pgPullRequestToDomain(pr pgPullRequest) *pullrequest.PullRequest {
