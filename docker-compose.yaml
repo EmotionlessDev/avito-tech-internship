@@ -5,7 +5,7 @@ services:
     ports:
       - "8080:4000"
     env_file:
-      - .env
+      - .env.local
     depends_on:
       db:
         condition: service_healthy
@@ -32,6 +32,18 @@ services:
     networks:
       - pr_net
 
+  migrate:
+    image: migrate/migrate
+    networks:
+     - pr_net
+    volumes:
+     - ./migrations:/migrations
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["-path", "/migrations", "-database",  "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable", "up"]
+    links: 
+     - db
 
 
 networks:

@@ -1,5 +1,5 @@
 include .env
-ENV_FILE = .env
+ENV_FILE = .env.local
 
 up:
 	docker compose --env-file $(ENV_FILE) up -d
