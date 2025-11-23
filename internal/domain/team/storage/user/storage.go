@@ -88,15 +88,6 @@ func (s *Storage) GetByID(ctx context.Context, tx *sql.Tx, id int64) (*team.User
 	return pgUserToDomain(u), nil
 }
 
-func pgUserToDomain(u pgUser) *team.User {
-	return &team.User{
-		ID:       u.id,
-		Name:     u.name,
-		TeamName: u.teamName,
-		IsActive: u.isActive,
-	}
-}
-
 const getByTeamSQL = `
 	SELECT id, name, team_name, is_active
 	FROM users
@@ -126,4 +117,13 @@ func (s *Storage) GetByTeam(ctx context.Context, tx *sql.Tx, teamName string) ([
 	}
 
 	return result, nil
+}
+
+func pgUserToDomain(u pgUser) *team.User {
+	return &team.User{
+		ID:       u.id,
+		Name:     u.name,
+		TeamName: u.teamName,
+		IsActive: u.isActive,
+	}
 }
