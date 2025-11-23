@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/users"
 )
 
@@ -24,9 +23,9 @@ func NewStorage() *Storage {
 	return &Storage{}
 }
 
-const getByIDSQL = `SELECT id, name, team_name, is_active FROM users WHERE id = $1`
+const setActiveByIDSQL = `UPDATE users SET is_active = $1 WHERE id = $2 RETURNING id, name, team_name, is_active;`
 
-func (s *Storage) GetByID(ctx context.Context, tx *sql.Tx, id int64) (*users.User, error) {
+func (s *Storage) SetActiveByID(ctx context.Context, tx *sql.Tx, id string, isActive bool) (*users.User, error) {
 	if tx == nil {
 		return nil, errNilTx
 	}
@@ -37,18 +36,19 @@ func (s *Storage) GetByID(ctx context.Context, tx *sql.Tx, id int64) (*users.Use
 	)
 
 	err = tx.QueryRow(
-		getByIDSQL,
+		setActiveByIDSQL,
+		isActive,
 		id,
-	).Scan(&u)
+	).Scan(&u.id, &u.name, &u.teamName, &u.isActive)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user by ID: %w", err)
+		return nil, fmt.Errorf("failed to set is_active user by ID: %w", err)
 	}
 
 	return pgUserToDomain(u), nil
 }
 
-func pgUserToDomain(u pgUser) *team.User {
-	return &team.User{
+func pgUserToDomain(u pgUser) *users.User {
+	return &users.User{
 		ID:       u.id,
 		Name:     u.name,
 		TeamName: u.teamName,

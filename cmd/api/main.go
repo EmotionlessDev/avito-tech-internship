@@ -16,6 +16,9 @@ import (
 	teamGet "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/get"
 	teamStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/team"
 	teamUserStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/user"
+	userHttp "github.com/EmotionlessDev/avito-tech-internship/internal/domain/users/delivery/http"
+	userUpdate "github.com/EmotionlessDev/avito-tech-internship/internal/domain/users/service/update"
+	userStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/users/storage/user"
 
 	_ "github.com/lib/pq"
 )
@@ -47,21 +50,31 @@ func main() {
 
 	// Init storage
 	teamStorage := teamStorage.NewStorage()
-	userStorage := teamUserStorage.NewStorage()
+	teamUserStorage := teamUserStorage.NewStorage()
+
+	userStorage := userStorage.NewStorage()
 
 	// Init services
-	teamAddService := teamAdd.NewService(teamStorage, userStorage, db)
-	teamGetService := teamGet.NewService(teamStorage, userStorage, db)
+	teamAddService := teamAdd.NewService(teamStorage, teamUserStorage, db)
+	teamGetService := teamGet.NewService(teamStorage, teamUserStorage, db)
+
+	userUpdateService := userUpdate.NewService(userStorage, db)
 
 	// Init Handlers
-	handler := teamHttp.NewHandler(teamAddService, teamGetService)
+	teamHandler := teamHttp.NewHandler(teamAddService, teamGetService)
+	userHandler := userHttp.NewHandler(userUpdateService)
 
 	// Init serveMux
 	mux := http.NewServeMux()
 
 	// Map Routes
-	mux.HandleFunc("/teams/add", handler.AddTeam)
-	mux.HandleFunc("/teams/get", handler.GetTeam)
+
+	// Team routes
+	mux.HandleFunc("/team/add", teamHandler.AddTeam)
+	mux.HandleFunc("/team/get", teamHandler.GetTeam)
+
+	// User routes
+	mux.HandleFunc("/users/setIsActive", userHandler.SetUserActive)
 
 	// Create http server
 	srv := &http.Server{
