@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/EmotionlessDev/avito-tech-internship/internal/common"
@@ -55,6 +56,8 @@ func (h *Handler) CreatePR(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	fmt.Printf("Created PR: %+v\n", createdPR)
 
 	helpers.WriteJSON(w, http.StatusCreated, helpers.Envelope{"pr": createdPR}, nil)
 }

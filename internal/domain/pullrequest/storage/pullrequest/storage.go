@@ -27,8 +27,8 @@ type pgPullRequest struct {
 }
 
 const createSQL = `
-	INSERT INTO pull_request (id, name, created_at, status, merged_at, author_id)
-	VALUES ($1, $2, NOW(), $3, $4, $5)
+	INSERT INTO pull_request (id, name, created_at, author_id)
+	VALUES ($1, $2, $3, $4)
 `
 
 func (s *Storage) Create(ctx context.Context, tx *sql.Tx, pr pullrequest.PullRequest) error {
@@ -36,7 +36,7 @@ func (s *Storage) Create(ctx context.Context, tx *sql.Tx, pr pullrequest.PullReq
 		return errNilTx
 	}
 
-	_, err := tx.ExecContext(ctx, createSQL, pr.ID, pr.Name, pr.Status, nil, pr.AuthorID)
+	_, err := tx.ExecContext(ctx, createSQL, pr.ID, pr.Name, pr.CreatedAt, pr.AuthorID)
 	if err != nil {
 		return fmt.Errorf("failed to create pull request: %w", err)
 	}

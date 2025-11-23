@@ -79,6 +79,8 @@ func (s *Service) CreatePR(ctx context.Context, pr pullrequest.PullRequest) (*pu
 		}
 	}
 
+	now := time.Now()
+	pr.CreatedAt = &now
 	pr.Status = "OPEN"
 	err = s.prStorage.Create(ctx, tx, pr)
 	if err != nil {
