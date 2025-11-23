@@ -10,12 +10,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/EmotionlessDev/avito-tech-internship/internal/application"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/config"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/handlers"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/repository"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/router"
-	"github.com/EmotionlessDev/avito-tech-internship/internal/services"
+	ht "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/delivery/http"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/add"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/team"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/user"
 
 	_ "github.com/lib/pq"
 )
@@ -44,24 +43,28 @@ func main() {
 			logger.Error("error closing db", slog.String("error", err.Error()))
 		}
 	}()
-	// Init error responder
-	errorResponder := handlers.NewErrorResponder(logger)
-
-	// Init repositories
-	teamRepo := repository.NewTeamRepo(db)
-	userRepo := repository.NewUserRepo(db)
+	// Init storage
+	teamStorage := team.NewStorage()
+	userStorage := user.NewStorage()
 
 	// Init services
-	teamService := services.NewTeamService(teamRepo, userRepo)
-	userService := services.NewUserService(userRepo)
+	teamService := add.NewService(teamStorage, userStorage, db)
 
-	// Init application via constructor
-	application := application.New(cfg, logger, db, errorResponder, teamService, userService)
+	// Init serveMux
+	mux := http.NewServeMux()
+
+	// Init Handlers
+	handler := &ht.Handler{
+		Service: teamService,
+	}
+
+	// Map Routes
+	ht.MapTeamRoutes(mux, handler)
 
 	// Create http server
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", cfg.Port),
-		Handler:      router.NewRouter(application),
+		Handler:      mux,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
