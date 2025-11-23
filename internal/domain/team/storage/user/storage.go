@@ -96,3 +96,34 @@ func pgUserToDomain(u pgUser) *team.User {
 		IsActive: u.isActive,
 	}
 }
+
+const getByTeamSQL = `
+	SELECT id, name, team_name, is_active
+	FROM users
+	WHERE team_name = $1
+	ORDER BY name
+`
+
+func (s *Storage) GetByTeam(ctx context.Context, tx *sql.Tx, teamName string) ([]team.User, error) {
+	if tx == nil {
+		return nil, errNilTx
+	}
+
+	rows, err := tx.Query(getByTeamSQL, teamName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get users: %w", err)
+	}
+	defer rows.Close()
+
+	var result []team.User
+
+	for rows.Next() {
+		var u pgUser
+		if err := rows.Scan(&u.id, &u.name, &u.teamName, &u.isActive); err != nil {
+			return nil, err
+		}
+		result = append(result, *pgUserToDomain(u))
+	}
+
+	return result, nil
+}

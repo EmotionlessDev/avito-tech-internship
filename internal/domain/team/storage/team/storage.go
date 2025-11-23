@@ -3,6 +3,7 @@ package team
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -63,4 +64,24 @@ func (s *Storage) CreateMany(ctx context.Context, tx *sql.Tx, users []team.User)
 
 	_, err := tx.Exec(query, args...)
 	return err
+}
+
+const getTeamSQL = `SELECT name FROM team WHERE name = $1`
+
+func (s *Storage) GetByName(ctx context.Context, tx *sql.Tx, name string) (*team.Team, error) {
+	if tx == nil {
+		return nil, errNilTx
+	}
+
+	var t team.Team
+
+	err := tx.QueryRow(getTeamSQL, name).Scan(&t.Name)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, common.ErrTeamNotFound
+		}
+		return nil, fmt.Errorf("failed to get team: %w", err)
+	}
+
+	return &t, nil
 }

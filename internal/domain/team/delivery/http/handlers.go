@@ -9,11 +9,13 @@ import (
 	"github.com/EmotionlessDev/avito-tech-internship/internal/common"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/add"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/get"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/helpers"
 )
 
 type Handler struct {
-	Service *add.Service
+	AddService *add.Service
+	GetService *get.Service
 }
 
 func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
@@ -36,7 +38,17 @@ func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	teamEntity := &team.Team{Name: req.TeamName}
 
-	err := h.Service.Add(ctx, teamEntity, req.Members)
+	members := make([]team.User, 0, len(req.Members))
+	for _, m := range req.Members {
+		members = append(members, team.User{
+			ID:       m.ID,
+			Name:     m.Name,
+			TeamName: req.TeamName,
+			IsActive: m.IsActive,
+		})
+	}
+
+	err := h.AddService.Add(ctx, teamEntity, members)
 	if err != nil {
 
 		if errors.Is(err, common.ErrTeamDuplicate) {
@@ -55,7 +67,46 @@ func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helpers.WriteJSON(w, http.StatusCreated, helpers.Envelope{
-		"team":    teamEntity.Name,
-		"members": req.Members,
+		"team_name": teamEntity.Name,
+		"members":   req.Members,
+	}, nil)
+}
+
+func (h *Handler) GetTeam(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		helpers.WriteJSON(w, http.StatusMethodNotAllowed, helpers.Envelope{
+			"error": "method not allowed",
+		}, nil)
+		return
+	}
+
+	teamName := r.URL.Query().Get("team_name")
+	if teamName == "" {
+		helpers.WriteJSON(w, http.StatusBadRequest, helpers.Envelope{
+			"error": "team_name is required",
+		}, nil)
+		return
+	}
+
+	ctx := r.Context()
+
+	res, err := h.GetService.Get(ctx, teamName)
+	if err != nil {
+		if errors.Is(err, common.ErrTeamNotFound) {
+			helpers.WriteJSON(w, http.StatusNotFound, helpers.Envelope{
+				"error": "team not found",
+			}, nil)
+			return
+		}
+
+		helpers.WriteJSON(w, http.StatusInternalServerError, helpers.Envelope{
+			"error": err.Error(),
+		}, nil)
+		return
+	}
+
+	helpers.WriteJSON(w, http.StatusOK, helpers.Envelope{
+		"team_name": res.Team.Name,
+		"members":   res.Members,
 	}, nil)
 }

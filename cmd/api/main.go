@@ -13,6 +13,7 @@ import (
 	"github.com/EmotionlessDev/avito-tech-internship/internal/config"
 	ht "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/delivery/http"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/add"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/get"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/team"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/user"
 
@@ -48,14 +49,16 @@ func main() {
 	userStorage := user.NewStorage()
 
 	// Init services
-	teamService := add.NewService(teamStorage, userStorage, db)
+	teamAddService := add.NewService(teamStorage, userStorage, db)
+	teamGetService := get.NewService(teamStorage, userStorage, db)
 
 	// Init serveMux
 	mux := http.NewServeMux()
 
 	// Init Handlers
 	handler := &ht.Handler{
-		Service: teamService,
+		AddService: teamAddService,
+		GetService: teamGetService,
 	}
 
 	// Map Routes
