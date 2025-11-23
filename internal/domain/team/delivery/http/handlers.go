@@ -2,7 +2,6 @@ package http
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"github.com/EmotionlessDev/avito-tech-internship/internal/common"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/add"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/helpers"
 )
 
 type Handler struct {
@@ -18,45 +18,44 @@ type Handler struct {
 
 func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		helpers.WriteJSON(w, http.StatusMethodNotAllowed, helpers.Envelope{
+			"error": "method not allowed",
+		}, nil)
 		return
 	}
 
 	var req AddTeamRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(ErrorResponse{
-			Code:    "INVALID_REQUEST",
-			Message: "invalid request body",
-		})
+	if err := helpers.ReadJSON(w, r, &req); err != nil {
+		helpers.WriteJSON(w, http.StatusBadRequest, helpers.Envelope{
+			"error":   "invalid_request",
+			"message": err.Error(),
+		}, nil)
 		return
 	}
 
-	t := &team.Team{Name: req.TeamName}
 	ctx := context.Background()
+	teamEntity := &team.Team{Name: req.TeamName}
 
-	err := h.Service.Add(ctx, t, req.Members)
+	err := h.Service.Add(ctx, teamEntity, req.Members)
 	if err != nil {
+
 		if errors.Is(err, common.ErrTeamDuplicate) {
-			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(ErrorResponse{
-				Code:    "TEAM_EXISTS",
-				Message: fmt.Sprintf("%s already exists", req.TeamName),
-			})
+			helpers.WriteJSON(w, http.StatusBadRequest, helpers.Envelope{
+				"error":   "team_exists",
+				"message": fmt.Sprintf("%s already exists", req.TeamName),
+			}, nil)
 			return
 		}
 
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(ErrorResponse{
-			Code:    "INTERNAL_ERROR",
-			Message: err.Error(),
-		})
+		helpers.WriteJSON(w, http.StatusInternalServerError, helpers.Envelope{
+			"error":   "internal_error",
+			"message": err.Error(),
+		}, nil)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(AddTeamResponse{
-		Team:    t.Name,
-		Members: req.Members,
-	})
+	helpers.WriteJSON(w, http.StatusCreated, helpers.Envelope{
+		"team":    teamEntity.Name,
+		"members": req.Members,
+	}, nil)
 }
