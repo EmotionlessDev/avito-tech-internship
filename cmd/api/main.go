@@ -11,6 +11,10 @@ import (
 	"time"
 
 	"github.com/EmotionlessDev/avito-tech-internship/internal/config"
+	prHttp "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/delivery/http"
+	prCreate "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/service/create"
+	prStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/storage/pullrequest"
+	prUserStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/pullrequest/storage/user"
 	teamHttp "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/delivery/http"
 	teamAdd "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/add"
 	teamGet "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/get"
@@ -54,15 +58,21 @@ func main() {
 
 	userStorage := userStorage.NewStorage()
 
+	prStorage := prStorage.NewStorage()
+	prUserStorage := prUserStorage.NewStorage()
+
 	// Init services
 	teamAddService := teamAdd.NewService(teamStorage, teamUserStorage, db)
 	teamGetService := teamGet.NewService(teamStorage, teamUserStorage, db)
 
 	userUpdateService := userUpdate.NewService(userStorage, db)
 
+	prCreateService := prCreate.NewService(db, prStorage, prUserStorage)
+
 	// Init Handlers
 	teamHandler := teamHttp.NewHandler(teamAddService, teamGetService)
 	userHandler := userHttp.NewHandler(userUpdateService)
+	prHandler := prHttp.NewHandler(prCreateService)
 
 	// Init serveMux
 	mux := http.NewServeMux()
@@ -75,6 +85,9 @@ func main() {
 
 	// User routes
 	mux.HandleFunc("/users/setIsActive", userHandler.SetUserActive)
+
+	// PR routes
+	mux.HandleFunc("/pullrequest/create", prHandler.CreatePR)
 
 	// Create http server
 	srv := &http.Server{
