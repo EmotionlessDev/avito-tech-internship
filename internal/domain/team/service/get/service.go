@@ -3,8 +3,10 @@ package get
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
+	"github.com/EmotionlessDev/avito-tech-internship/internal/common"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team"
 )
 
@@ -50,6 +52,15 @@ func (s *Service) Get(ctx context.Context, teamName string) (*TeamWithMembers, e
 		}
 		tx.Commit()
 	}()
+
+	_, err = s.teamStorage.GetByName(ctx, tx, teamName)
+	if err != nil {
+		if errors.Is(err, common.ErrTeamNotFound) {
+			return nil, common.ErrTeamNotFound
+		}
+
+		return nil, fmt.Errorf("failed to get team: %w", err)
+	}
 
 	members, err := s.userStorage.GetByTeam(ctx, tx, teamName)
 	if err != nil {

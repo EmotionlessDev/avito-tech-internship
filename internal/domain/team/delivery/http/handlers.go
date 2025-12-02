@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/EmotionlessDev/avito-tech-internship/internal/common"
@@ -34,18 +33,13 @@ func NewHandler(addService AddService, getService GetService) *Handler {
 
 func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		helpers.WriteJSON(w, http.StatusMethodNotAllowed, helpers.Envelope{
-			"error": "method not allowed",
-		}, nil)
+		common.MethodNotAllowedResponse(w)
 		return
 	}
 
 	var req AddTeamRequest
 	if err := helpers.ReadJSON(w, r, &req); err != nil {
-		helpers.WriteJSON(w, http.StatusBadRequest, helpers.Envelope{
-			"error":   "invalid_request",
-			"message": err.Error(),
-		}, nil)
+		common.BadRequestResponse(w, err)
 		return
 	}
 
@@ -66,39 +60,31 @@ func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 
 		if errors.Is(err, common.ErrTeamDuplicate) {
-			helpers.WriteJSON(w, http.StatusBadRequest, helpers.Envelope{
-				"error":   "team_exists",
-				"message": fmt.Sprintf("%s already exists", req.TeamName),
-			}, nil)
+			common.BadRequestResponse(w, common.ErrTeamDuplicate)
 			return
 		}
 
-		helpers.WriteJSON(w, http.StatusInternalServerError, helpers.Envelope{
-			"error":   "internal_error",
-			"message": err.Error(),
-		}, nil)
+		common.InternalServerErrorResponse(w, err)
 		return
 	}
 
-	helpers.WriteJSON(w, http.StatusCreated, helpers.Envelope{
-		"team_name": teamEntity.Name,
-		"members":   req.Members,
-	}, nil)
+	rsp := &AddTeamResponse{
+		Team:    teamEntity.Name,
+		Members: members,
+	}
+
+	helpers.WriteJSONObj(w, http.StatusCreated, rsp, nil)
 }
 
 func (h *Handler) GetTeam(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
-		helpers.WriteJSON(w, http.StatusMethodNotAllowed, helpers.Envelope{
-			"error": "method not allowed",
-		}, nil)
+		common.MethodNotAllowedResponse(w)
 		return
 	}
 
 	teamName := r.URL.Query().Get("team_name")
 	if teamName == "" {
-		helpers.WriteJSON(w, http.StatusBadRequest, helpers.Envelope{
-			"error": "team_name is required",
-		}, nil)
+		common.BadRequestResponse(w, common.ErrInvalidTeamName)
 		return
 	}
 
@@ -107,20 +93,18 @@ func (h *Handler) GetTeam(w http.ResponseWriter, r *http.Request) {
 	res, err := h.getService.Get(ctx, teamName)
 	if err != nil {
 		if errors.Is(err, common.ErrTeamNotFound) {
-			helpers.WriteJSON(w, http.StatusNotFound, helpers.Envelope{
-				"error": "team not found",
-			}, nil)
+			common.NotFoundResponse(w, common.ErrTeamNotFound)
 			return
 		}
 
-		helpers.WriteJSON(w, http.StatusInternalServerError, helpers.Envelope{
-			"error": err.Error(),
-		}, nil)
+		common.InternalServerErrorResponse(w, err)
 		return
 	}
 
-	helpers.WriteJSON(w, http.StatusOK, helpers.Envelope{
-		"team_name": res.Team.Name,
-		"members":   res.Members,
-	}, nil)
+	rsp := &GetTeamResponse{
+		Team:    res.Team.Name,
+		Members: res.Members,
+	}
+
+	helpers.WriteJSONObj(w, http.StatusOK, rsp, nil)
 }

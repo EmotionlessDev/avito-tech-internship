@@ -1,8 +1,15 @@
 package http
 
-import "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team"
+import (
+	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team"
+)
 
 type AddTeamResponse struct {
+	Team    string      `json:"team_name"`
+	Members []team.User `json:"members"`
+}
+
+type GetTeamResponse struct {
 	Team    string      `json:"team_name"`
 	Members []team.User `json:"members"`
 }
