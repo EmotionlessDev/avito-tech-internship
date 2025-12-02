@@ -5,8 +5,8 @@ import (
 )
 
 type AddTeamResponse struct {
-	Team    string      `json:"team_name"`
-	Members []team.User `json:"members"`
+	Team    string   `json:"team_name"`
+	Members []Member `json:"members"`
 }
 
 type GetTeamResponse struct {
@@ -23,6 +23,12 @@ type AddTeamMemberRequest struct {
 type AddTeamRequest struct {
 	TeamName string                 `json:"team_name"`
 	Members  []AddTeamMemberRequest `json:"members"`
+}
+
+type Member struct {
+	ID       string `json:"user_id"`
+	Name     string `json:"username"`
+	IsActive bool   `json:"is_active"`
 }
 
 type ErrorResponse struct {

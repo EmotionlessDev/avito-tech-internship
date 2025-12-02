@@ -46,17 +46,23 @@ func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	teamEntity := &team.Team{Name: req.TeamName}
 
-	members := make([]team.User, 0, len(req.Members))
+	domainMembers := make([]team.User, 0, len(req.Members))
+	members := make([]Member, 0, len(req.Members))
 	for _, m := range req.Members {
-		members = append(members, team.User{
+		domainMembers = append(domainMembers, team.User{
 			ID:       m.ID,
 			Name:     m.Name,
 			TeamName: req.TeamName,
 			IsActive: m.IsActive,
 		})
+		members = append(members, Member{
+			ID:       m.ID,
+			Name:     m.Name,
+			IsActive: m.IsActive,
+		})
 	}
 
-	err := h.addService.Add(ctx, teamEntity, members)
+	err := h.addService.Add(ctx, teamEntity, domainMembers)
 	if err != nil {
 
 		if errors.Is(err, common.ErrTeamDuplicate) {
