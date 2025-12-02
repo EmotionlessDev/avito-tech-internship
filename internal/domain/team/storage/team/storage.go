@@ -20,14 +20,14 @@ func NewStorage() *Storage {
 	return &Storage{}
 }
 
-const createSQL = `INSERT INTO team (name) VALUES ($1) RETURNING id`
+const createSQL = `INSERT INTO team (name) VALUES ($1)`
 
 func (s *Storage) Create(ctx context.Context, tx *sql.Tx, name string) error {
 	if tx == nil {
 		return errNilTx
 	}
 
-	_, err := tx.Exec("INSERT INTO team (name) VALUES ($1)", name)
+	_, err := tx.Exec(createSQL, name)
 	if err != nil {
 		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code.Name() == "unique_violation" {
 			return common.ErrTeamDuplicate
@@ -37,6 +37,15 @@ func (s *Storage) Create(ctx context.Context, tx *sql.Tx, name string) error {
 
 	return nil
 }
+
+const createManySQL = `
+INSERT INTO users (id, name, team_name, is_active)
+VALUES %s
+ON CONFLICT (id) DO UPDATE
+SET name = EXCLUDED.name,
+	team_name = EXCLUDED.team_name,
+	is_active = EXCLUDED.is_active
+	`
 
 func (s *Storage) CreateMany(ctx context.Context, tx *sql.Tx, users []team.User) error {
 	if tx == nil {
@@ -53,15 +62,7 @@ func (s *Storage) CreateMany(ctx context.Context, tx *sql.Tx, users []team.User)
 		argPos += 4
 	}
 
-	query := fmt.Sprintf(`
-        INSERT INTO users (id, name, team_name, is_active)
-        VALUES %s
-        ON CONFLICT (id) DO UPDATE
-        SET name = EXCLUDED.name,
-            team_name = EXCLUDED.team_name,
-            is_active = EXCLUDED.is_active
-    `, strings.Join(values, ", "))
-
+	query := fmt.Sprintf(createManySQL, strings.Join(values, ", "))
 	_, err := tx.Exec(query, args...)
 	return err
 }

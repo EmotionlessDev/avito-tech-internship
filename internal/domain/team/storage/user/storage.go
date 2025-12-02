@@ -52,15 +52,7 @@ func (s *Storage) CreateMany(ctx context.Context, tx *sql.Tx, users []team.User)
 		argPos += 4
 	}
 
-	query := fmt.Sprintf(`
-        INSERT INTO users (id, name, team_name, is_active)
-        VALUES %s
-        ON CONFLICT (id) DO UPDATE
-        SET name = EXCLUDED.name,
-            team_name = EXCLUDED.team_name,
-            is_active = EXCLUDED.is_active
-    `, strings.Join(values, ", "))
-
+	query := fmt.Sprintf(createManySQL, strings.Join(values, ", "))
 	_, err := tx.Exec(query, args...)
 	return err
 }
