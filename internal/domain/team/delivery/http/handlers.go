@@ -9,6 +9,7 @@ import (
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/get"
 	"github.com/EmotionlessDev/avito-tech-internship/internal/helpers"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/validator"
 )
 
 type AddService interface {
@@ -40,6 +41,12 @@ func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
 	var req AddTeamRequest
 	if err := helpers.ReadJSON(w, r, &req); err != nil {
 		common.BadRequestResponse(w, err)
+		return
+	}
+
+	v := validator.New()
+	if req.Validate(v); !v.Valid() {
+		common.FailedValidationResponse(w, v.Errors)
 		return
 	}
 
