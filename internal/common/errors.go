@@ -7,15 +7,17 @@ import (
 	"github.com/EmotionlessDev/avito-tech-internship/internal/helpers"
 )
 
-var ErrUserNotFound error = errors.New("user not found")
-var ErrTeamNotFound error = errors.New("team not found")
-var ErrTeamDuplicate error = errors.New("team already exists")
-var ErrInvalidTeamName error = errors.New("invalid team name")
-var ErrPRExists error = errors.New("pull request already exists")
-var ErrPRNotFound error = errors.New("pull request not found")
-var ErrAuthorNotFound error = errors.New("author not found")
-var ErrNotAssignedReviewer error = errors.New("user is not an assigned reviewer for this pull request")
-var ErrNoCandidates error = errors.New("no active replacement candidate in team")
+var (
+	ErrUserNotFound        = errors.New("user not found")
+	ErrTeamNotFound        = errors.New("team not found")
+	ErrTeamDuplicate       = errors.New("team already exists")
+	ErrInvalidTeamName     = errors.New("invalid team name")
+	ErrPRExists            = errors.New("pull request already exists")
+	ErrPRNotFound          = errors.New("pull request not found")
+	ErrAuthorNotFound      = errors.New("author not found")
+	ErrNotAssignedReviewer = errors.New("user is not an assigned reviewer for this pull request")
+	ErrNoCandidates        = errors.New("no active replacement candidate in team")
+)
 
 func errorResponse(w http.ResponseWriter, status int, err error, message interface{}) {
 	helpers.WriteJSON(w, status, helpers.Envelope{
