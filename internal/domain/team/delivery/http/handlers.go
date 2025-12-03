@@ -50,7 +50,7 @@ func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := context.Background()
+	ctx := r.Context()
 	teamEntity := &team.Team{Name: req.TeamName}
 
 	domainMembers := make([]team.User, 0, len(req.Members))
@@ -71,7 +71,6 @@ func (h *Handler) AddTeam(w http.ResponseWriter, r *http.Request) {
 
 	err := h.addService.Add(ctx, teamEntity, domainMembers)
 	if err != nil {
-
 		if errors.Is(err, common.ErrTeamDuplicate) {
 			common.BadRequestResponse(w, common.ErrTeamDuplicate)
 			return

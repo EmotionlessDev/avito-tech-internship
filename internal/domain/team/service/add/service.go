@@ -8,23 +8,14 @@ import (
 	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team"
 )
 
-type TeamStorage interface {
-	Create(ctx context.Context, tx *sql.Tx, name string) error
-}
-
-type UserStorage interface {
-	GetByID(ctx context.Context, tx *sql.Tx, id int64) (*team.User, error)
-	CreateMany(ctx context.Context, tx *sql.Tx, users []team.User) error
-}
-
 type Service struct {
-	teamStorage TeamStorage
-	userStorage UserStorage
+	teamStorage team.TeamStorage
+	userStorage team.UserStorage
 
 	db *sql.DB
 }
 
-func NewService(teamStorage TeamStorage, userStorage UserStorage, db *sql.DB) *Service {
+func NewService(teamStorage team.TeamStorage, userStorage team.UserStorage, db *sql.DB) *Service {
 	return &Service{
 		teamStorage: teamStorage,
 		userStorage: userStorage,

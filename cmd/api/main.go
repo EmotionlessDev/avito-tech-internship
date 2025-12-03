@@ -20,6 +20,7 @@ import (
 	teamAdd "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/add"
 	teamGet "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/service/get"
 	teamStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/team"
+	"github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/team/wrap"
 	teamUserStorage "github.com/EmotionlessDev/avito-tech-internship/internal/domain/team/storage/user"
 	userHttp "github.com/EmotionlessDev/avito-tech-internship/internal/domain/users/delivery/http"
 	userUpdate "github.com/EmotionlessDev/avito-tech-internship/internal/domain/users/service/update"
@@ -54,7 +55,7 @@ func main() {
 	}()
 
 	// Init storage
-	teamStorage := teamStorage.NewStorage()
+	teamStorage := wrap.NewLogStorage(teamStorage.NewStorage(), logger)
 	teamUserStorage := teamUserStorage.NewStorage()
 
 	userStorage := userStorage.NewStorage()
